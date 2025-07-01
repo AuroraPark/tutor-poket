@@ -2,7 +2,7 @@ import axios from "axios";
 
 // API 기본 설정
 const api = axios.create({
-  baseURL: "http://localhost:3000/api", // 백엔드 서버 주소
+  baseURL: import.meta.env.VITE_API_URL, // 백엔드 서버 주소
   headers: {
     "Content-Type": "application/json",
   },
