@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tutor {
+  id       Int       @id @default(autoincrement())
+  name     String
+  email    String    @unique
+  password String
+
+  students Student[]
+  notifications Notification[]
+}
+
+model Student {
+  id       Int      @id @default(autoincrement())
+  name     String
+  subject  String
+  contact  String?
+  memo     String?
+  tutorId  Int
+
+  tutor    Tutor    @relation(fields: [tutorId], references: [id])
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        Int          @id @default(autoincrement())
+  date      DateTime
+  topic     String
+  status    LessonStatus @default(SCHEDULED)
+  studentId Int
+
+  student   Student   @relation(fields: [studentId], references: [id])
+  report    Report?
+  notifications Notification[]
+}
+
+model Report {
+  id        Int        @id @default(autoincrement())
+  content   String
+  lessonId  Int        @unique
+
+  lesson    Lesson     @relation(fields: [lessonId], references: [id])
+  assignments Assignment[]
+  notifications Notification[]
+}
+
+model Assignment {
+  id         Int                @id @default(autoincrement())
+  title      String
+  content    String?            // 숙제 내용
+  status     AssignmentStatus   @default(PENDING)
+  dueDate    DateTime?
+  attachment String?            // 첨부자료 (파일 경로 또는 URL)
+  reportId   Int
+
+  report     Report   @relation(fields: [reportId], references: [id])
+}
+
+model Notification {
+  id        Int                @id @default(autoincrement())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean            @default(false)
+  lessonId  Int?
+  reportId  Int?
+  tutorId   Int
+  createdAt DateTime           @default(now())
+
+  lesson    Lesson?            @relation(fields: [lessonId], references: [id])
+  report    Report?            @relation(fields: [reportId], references: [id])
+  tutor     Tutor              @relation(fields: [tutorId], references: [id])
+}
+
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+}
+
+enum AssignmentStatus {
+  PENDING
+  SUBMITTED
+  REVIEWED
+}
+
+enum NotificationType {
+  LESSON_REMINDER    // 수업 전 리마인드
+  REPORT_READY       // 리포트 준비 완료
+  ASSIGNMENT_DUE     // 과제 마감 알림
+  GENERAL            // 일반 알림
+}
