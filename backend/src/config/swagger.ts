@@ -9,12 +9,12 @@ const options = {
       description: "튜터링 관리 시스템 API 문서",
       contact: {
         name: "API Support",
-        email: "support@tutorpocket.com",
+        email: "dev.hmpark@gmail.com",
       },
     },
     servers: [
       {
-        url: "http://localhost:3000",
+        url: "https://tutor-poket.onrender.com",
         description: "개발 서버",
       },
     ],
