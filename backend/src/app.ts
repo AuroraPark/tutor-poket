@@ -48,7 +48,7 @@ app.get("/", (req, res) => {
     message: "Tutor Pocket API",
     version: "1.0.0",
     status: "running",
-    docs: "http://localhost:3000/api-docs",
+    docs: "https://tutor-poket.onrender.com:3000/api-docs",
   });
 });
 
@@ -59,6 +59,12 @@ app.use((req, res) => {
     error: "요청한 리소스를 찾을 수 없습니다.",
   });
 });
+
+app.use(
+  cors({
+    origin: "https://frontend-6k5wlj717-auroraparks-projects.vercel.app",
+  })
+);
 
 // 에러 핸들러
 app.use(
