@@ -5,10 +5,7 @@ import { EditableLessonCalendar } from "./EditableLessonCalendar";
 import { EditableLessonList } from "./EditableLessonList";
 import { Lesson } from "@/types";
 
-interface Student {
-  id: string;
-  name: string;
-}
+import { Student } from "@/types";
 
 interface EditableLessonSectionProps {
   lessons: Lesson[];

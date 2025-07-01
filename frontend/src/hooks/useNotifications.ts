@@ -9,7 +9,6 @@ export const useNotifications = (tutorId?: number) => {
     queryFn: () => notificationAPI.getAll(),
     select: (data) => {
       const notifications = data.data as Notification[];
-      const now = new Date();
 
       // 날짜가 지난 수업 리마인드 알림 필터링
       return notifications.filter((notification) => {
@@ -31,7 +30,6 @@ export const useUnreadNotifications = (tutorId?: number) => {
     queryFn: () => notificationAPI.getAll(),
     select: (data) => {
       const notifications = data.data as Notification[];
-      const now = new Date();
 
       // 날짜가 지난 수업 리마인드 알림 필터링
       const filteredNotifications = notifications.filter((notification) => {

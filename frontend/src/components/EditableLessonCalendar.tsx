@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,7 @@ export function EditableLessonCalendar({
   // 학생 이름 가져오기
   const getStudentName = (studentId: number) => {
     console.log(studentId);
-    const student = students.find((s) => s.id === studentId.toString());
+    const student = students.find((s) => s.id === studentId);
     return student?.name || "알 수 없는 학생";
   };
 

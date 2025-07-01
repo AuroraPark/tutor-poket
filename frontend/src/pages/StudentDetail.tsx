@@ -1,15 +1,8 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Plus, Calendar, Clock, BookOpen, Edit } from "lucide-react";
+import { ArrowLeft, Plus, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +29,6 @@ import {
   useLessonsByStudent,
   useCreateLesson,
   useUpdateLesson,
-  useReportByLesson,
 } from "@/hooks";
 import { Lesson } from "@/types";
 
@@ -142,15 +134,15 @@ export default function StudentDetail() {
     setIsEditLessonOpen(true);
   };
 
-  const handleStatusChange = (
-    lessonId: string,
-    newStatus: Lesson["status"]
-  ) => {
-    updateLessonMutation.mutate({
-      id: lessonId,
-      data: { status: newStatus },
-    });
-  };
+  // const handleStatusChange = (
+  //   lessonId: string,
+  //   newStatus: Lesson["status"]
+  // ) => {
+  //   updateLessonMutation.mutate({
+  //     id: lessonId,
+  //     data: { status: newStatus },
+  //   });
+  // };
 
   const handleStatusChangeWithReport = (
     lesson: Lesson,

@@ -3,9 +3,7 @@ import {
   Users,
   BookOpen,
   Calendar,
-  Bell,
   Settings,
-  Plus,
   LogOut,
   FileText,
 } from "lucide-react";

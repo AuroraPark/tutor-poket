@@ -3,20 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar, List } from "lucide-react";
 import { LessonCalendar } from "./LessonCalendar";
 import { LessonList } from "./LessonList";
+import { Student } from "@/types";
 
-interface Lesson {
-  id: string;
-  date: string;
-  topic: string;
-  status: string;
-  studentId: string;
-  memo?: string;
-}
-
-interface Student {
-  id: string;
-  name: string;
-}
+import { Lesson } from "@/types";
 
 interface LessonSectionProps {
   lessons: Lesson[];

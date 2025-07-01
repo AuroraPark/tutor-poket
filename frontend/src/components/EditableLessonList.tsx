@@ -10,11 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Lesson } from "@/types";
-
-interface Student {
-  id: number;
-  name: string;
-}
+import { Student } from "@/types";
 
 interface EditableLessonListProps {
   lessons: Lesson[];

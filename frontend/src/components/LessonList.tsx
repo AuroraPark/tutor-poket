@@ -1,21 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Student } from "@/types";
+import { Lesson } from "@/types";
 
-interface Lesson {
-  id: string;
-  date: string;
-  topic: string;
-  status: string;
-  studentId: string;
-  memo?: string;
-}
-
-interface Student {
-  id: number;
-  name: string;
-}
-
-interface LessonListProps {
+export interface LessonListProps {
   lessons: Lesson[];
   students: Student[];
 }
@@ -90,7 +78,7 @@ export function LessonList({ lessons, students }: LessonListProps) {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h4 className="font-semibold text-lg">
-                          {getStudentName(lesson.studentId)}
+                          {getStudentName(lesson.studentId.toString())}
                         </h4>
                         {getStatusBadge(lesson.status)}
                       </div>

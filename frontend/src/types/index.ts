@@ -20,6 +20,7 @@ export interface Lesson {
     name: string;
     subject: string;
   };
+  memo?: string;
 }
 
 export interface Report {

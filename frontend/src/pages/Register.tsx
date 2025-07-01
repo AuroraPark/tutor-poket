@@ -38,8 +38,8 @@ export default function Register() {
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      subjects: formData.subjects.split(",").map((s) => s.trim()),
-      experience: parseInt(formData.experience),
+      // subjects: formData.subjects.split(",").map((s) => s.trim()),
+      // experience: parseInt(formData.experience),
     });
 
     if (success) {

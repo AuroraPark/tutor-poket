@@ -1,21 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface Lesson {
-  id: string;
-  date: string;
-  topic: string;
-  status: string;
-  studentId: string;
-}
-
-interface Student {
-  id: number;
-  name: string;
-}
+import { Lesson } from "@/types";
+import { Student } from "@/types";
 
 interface LessonCalendarProps {
   lessons: Lesson[];
@@ -175,7 +163,7 @@ export function LessonCalendar({ lessons, students }: LessonCalendarProps) {
                     className="text-xs p-1 bg-blue-50 rounded"
                   >
                     <div className="font-medium truncate">
-                      {getStudentName(lesson.studentId)}
+                      {getStudentName(lesson.studentId.toString())}
                     </div>
                     <div className="text-gray-600 truncate">{lesson.topic}</div>
                     {getStatusBadge(lesson.status)}

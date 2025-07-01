@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Check,
-  Trash2,
-  Clock,
-  BookOpen,
-  FileText,
-  AlertCircle,
-} from "lucide-react";
+import { Bell, Clock, BookOpen, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,10 +43,10 @@ export function NotificationDropdown() {
     setIsOpen(false);
   };
 
-  const handleMarkAsRead = (id: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    markAsRead.mutate(id.toString());
-  };
+  // const handleMarkAsRead = (id: number, event: React.MouseEvent) => {
+  //   event.stopPropagation();
+  //   markAsRead.mutate(id.toString());
+  // };
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate();
@@ -160,7 +152,7 @@ export function NotificationDropdown() {
               className={`flex items-start space-x-3 p-3 cursor-pointer ${
                 !notification.isRead ? "bg-blue-50" : ""
               }`}
-              onClick={(event) => handleNotificationClick(notification)}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="flex-shrink-0 mt-0.5">
                 {getNotificationIcon(notification.type)}
