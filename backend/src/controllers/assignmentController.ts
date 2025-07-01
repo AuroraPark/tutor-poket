@@ -2,50 +2,59 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { CreateAssignmentRequest, ApiResponse } from "../types";
 
+// 공통 select/include 상수 정의
+const tutorSelect = {
+  id: true,
+  name: true,
+  email: true,
+};
+const studentWithTutorSelect = {
+  id: true,
+  name: true,
+  subject: true,
+  tutor: { select: tutorSelect },
+};
+const assignmentReportInclude = {
+  report: {
+    include: {
+      lesson: {
+        include: {
+          student: { select: studentWithTutorSelect },
+        },
+      },
+    },
+  },
+};
+
 export const getAssignments = async (req: Request, res: Response) => {
   try {
     const { reportId, status } = req.query;
-
     const where: any = {};
-    if (reportId) where.reportId = Number(reportId);
+    if (reportId) {
+      const reportIdNum = Number(reportId);
+      if (isNaN(reportIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: "reportId가 올바르지 않습니다.",
+        } as ApiResponse);
+      }
+      where.reportId = reportIdNum;
+    }
     if (status) where.status = status;
 
     const assignments = await prisma.assignment.findMany({
       where,
-      include: {
-        report: {
-          include: {
-            lesson: {
-              include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                    tutor: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: assignmentReportInclude,
       orderBy: { id: "desc" },
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: assignments,
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 목록 조회 오류:", error);
-    res.status(500).json({
+    console.error("[getAssignments] 과제 목록 조회 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -62,12 +71,18 @@ export const createAssignment = async (req: Request, res: Response) => {
       reportId,
       status,
     }: CreateAssignmentRequest = req.body;
+    const reportIdNum = Number(reportId);
+    if (!reportId || isNaN(reportIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: "reportId가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     // 리포트 존재 확인
     const report = await prisma.report.findUnique({
-      where: { id: Number(reportId) },
+      where: { id: reportIdNum },
     });
-
     if (!report) {
       return res.status(400).json({
         success: false,
@@ -81,43 +96,20 @@ export const createAssignment = async (req: Request, res: Response) => {
         content,
         dueDate: dueDate ? new Date(dueDate) : null,
         attachment,
-        reportId: Number(reportId),
+        reportId: reportIdNum,
         status: status || "PENDING",
       },
-      include: {
-        report: {
-          include: {
-            lesson: {
-              include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                    tutor: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: assignmentReportInclude,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: assignment,
       message: "과제가 성공적으로 생성되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 생성 오류:", error);
-    res.status(500).json({
+    console.error("[createAssignment] 과제 생성 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -127,33 +119,16 @@ export const createAssignment = async (req: Request, res: Response) => {
 export const getAssignmentById = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     const assignment = await prisma.assignment.findUnique({
       where: { id },
-      include: {
-        report: {
-          include: {
-            lesson: {
-              include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                    tutor: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: assignmentReportInclude,
     });
 
     if (!assignment) {
@@ -163,13 +138,13 @@ export const getAssignmentById = async (req: Request, res: Response) => {
       } as ApiResponse);
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: assignment,
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 조회 오류:", error);
-    res.status(500).json({
+    console.error("[getAssignmentById] 과제 조회 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -179,13 +154,18 @@ export const getAssignmentById = async (req: Request, res: Response) => {
 export const updateAssignment = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
     const { title, content, dueDate, attachment, status } = req.body;
 
     // 과제 존재 확인
     const existingAssignment = await prisma.assignment.findUnique({
       where: { id },
     });
-
     if (!existingAssignment) {
       return res.status(404).json({
         success: false,
@@ -213,40 +193,17 @@ export const updateAssignment = async (req: Request, res: Response) => {
         attachment,
         status,
       },
-      include: {
-        report: {
-          include: {
-            lesson: {
-              include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                    tutor: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: assignmentReportInclude,
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: assignment,
       message: "과제가 성공적으로 업데이트되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 업데이트 오류:", error);
-    res.status(500).json({
+    console.error("[updateAssignment] 과제 업데이트 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -256,13 +213,18 @@ export const updateAssignment = async (req: Request, res: Response) => {
 export const updateAssignmentStatus = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
     const { status } = req.body;
 
     // 과제 존재 확인
     const existingAssignment = await prisma.assignment.findUnique({
       where: { id },
     });
-
     if (!existingAssignment) {
       return res.status(404).json({
         success: false,
@@ -282,40 +244,17 @@ export const updateAssignmentStatus = async (req: Request, res: Response) => {
     const assignment = await prisma.assignment.update({
       where: { id },
       data: { status },
-      include: {
-        report: {
-          include: {
-            lesson: {
-              include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                    tutor: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: assignmentReportInclude,
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: assignment,
       message: "과제 상태가 성공적으로 업데이트되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 상태 업데이트 오류:", error);
-    res.status(500).json({
+    console.error("[updateAssignmentStatus] 과제 상태 업데이트 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -325,12 +264,17 @@ export const updateAssignmentStatus = async (req: Request, res: Response) => {
 export const deleteAssignment = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     // 과제 존재 확인
     const existingAssignment = await prisma.assignment.findUnique({
       where: { id },
     });
-
     if (!existingAssignment) {
       return res.status(404).json({
         success: false,
@@ -340,13 +284,13 @@ export const deleteAssignment = async (req: Request, res: Response) => {
 
     await prisma.assignment.delete({ where: { id } });
 
-    res.json({
+    return res.json({
       success: true,
       message: "과제가 성공적으로 삭제되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("과제 삭제 오류:", error);
-    res.status(500).json({
+    console.error("[deleteAssignment] 과제 삭제 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);

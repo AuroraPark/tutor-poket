@@ -2,12 +2,33 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { ApiResponse } from "../types";
 
+// 공통 select 상수 정의
+const studentSelect = {
+  id: true,
+  name: true,
+  subject: true,
+};
+const tutorSelect = {
+  id: true,
+  name: true,
+  email: true,
+};
+
 export const getNotifications = async (req: Request, res: Response) => {
   try {
     const { tutorId, type, isRead } = req.query;
 
     const where: any = {};
-    if (tutorId) where.tutorId = Number(tutorId);
+    if (tutorId) {
+      const tutorIdNum = Number(tutorId);
+      if (isNaN(tutorIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: "tutorId가 올바르지 않습니다.",
+        } as ApiResponse);
+      }
+      where.tutorId = tutorIdNum;
+    }
     if (type) where.type = type;
     if (isRead !== undefined) where.isRead = isRead === "true";
 
@@ -16,37 +37,19 @@ export const getNotifications = async (req: Request, res: Response) => {
       include: {
         lesson: {
           include: {
-            student: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
-              },
-            },
+            student: { select: studentSelect },
           },
         },
         report: {
           include: {
             lesson: {
               include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                  },
-                },
+                student: { select: studentSelect },
               },
             },
           },
         },
-        tutor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        tutor: { select: tutorSelect },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -61,13 +64,13 @@ export const getNotifications = async (req: Request, res: Response) => {
       return true;
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: filteredNotifications,
     } as ApiResponse);
   } catch (error) {
-    console.error("알림 목록 조회 오류:", error);
-    res.status(500).json({
+    console.error("[getNotifications] 알림 목록 조회 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -77,12 +80,16 @@ export const getNotifications = async (req: Request, res: Response) => {
 export const createNotification = async (req: Request, res: Response) => {
   try {
     const { type, title, message, lessonId, reportId, tutorId } = req.body;
+    const tutorIdNum = Number(tutorId);
+    if (!tutorId || isNaN(tutorIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: "tutorId가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     // 튜터 존재 확인
-    const tutor = await prisma.tutor.findUnique({
-      where: { id: Number(tutorId) },
-    });
-
+    const tutor = await prisma.tutor.findUnique({ where: { id: tutorIdNum } });
     if (!tutor) {
       return res.status(400).json({
         success: false,
@@ -91,11 +98,18 @@ export const createNotification = async (req: Request, res: Response) => {
     }
 
     // 강의 존재 확인 (lessonId가 제공된 경우)
+    let lessonIdNum: number | null = null;
     if (lessonId) {
+      lessonIdNum = Number(lessonId);
+      if (isNaN(lessonIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: "lessonId가 올바르지 않습니다.",
+        } as ApiResponse);
+      }
       const lesson = await prisma.lesson.findUnique({
-        where: { id: Number(lessonId) },
+        where: { id: lessonIdNum },
       });
-
       if (!lesson) {
         return res.status(400).json({
           success: false,
@@ -105,11 +119,18 @@ export const createNotification = async (req: Request, res: Response) => {
     }
 
     // 리포트 존재 확인 (reportId가 제공된 경우)
+    let reportIdNum: number | null = null;
     if (reportId) {
+      reportIdNum = Number(reportId);
+      if (isNaN(reportIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: "reportId가 올바르지 않습니다.",
+        } as ApiResponse);
+      }
       const report = await prisma.report.findUnique({
-        where: { id: Number(reportId) },
+        where: { id: reportIdNum },
       });
-
       if (!report) {
         return res.status(400).json({
           success: false,
@@ -123,55 +144,37 @@ export const createNotification = async (req: Request, res: Response) => {
         type,
         title,
         message,
-        lessonId: lessonId ? Number(lessonId) : null,
-        reportId: reportId ? Number(reportId) : null,
-        tutorId: Number(tutorId),
+        lessonId: lessonIdNum,
+        reportId: reportIdNum,
+        tutorId: tutorIdNum,
       },
       include: {
         lesson: {
           include: {
-            student: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
-              },
-            },
+            student: { select: studentSelect },
           },
         },
         report: {
           include: {
             lesson: {
               include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                  },
-                },
+                student: { select: studentSelect },
               },
             },
           },
         },
-        tutor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        tutor: { select: tutorSelect },
       },
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: notification,
       message: "알림이 성공적으로 생성되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("알림 생성 오류:", error);
-    res.status(500).json({
+    console.error("[createNotification] 알림 생성 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -181,12 +184,17 @@ export const createNotification = async (req: Request, res: Response) => {
 export const markAsRead = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     // 알림 존재 확인
     const existingNotification = await prisma.notification.findUnique({
       where: { id },
     });
-
     if (!existingNotification) {
       return res.status(404).json({
         success: false,
@@ -200,48 +208,30 @@ export const markAsRead = async (req: Request, res: Response) => {
       include: {
         lesson: {
           include: {
-            student: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
-              },
-            },
+            student: { select: studentSelect },
           },
         },
         report: {
           include: {
             lesson: {
               include: {
-                student: {
-                  select: {
-                    id: true,
-                    name: true,
-                    subject: true,
-                  },
-                },
+                student: { select: studentSelect },
               },
             },
           },
         },
-        tutor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        tutor: { select: tutorSelect },
       },
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: notification,
       message: "알림이 읽음으로 표시되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("알림 읽음 처리 오류:", error);
-    res.status(500).json({
+    console.error("[markAsRead] 알림 읽음 처리 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -251,29 +241,35 @@ export const markAsRead = async (req: Request, res: Response) => {
 export const markAllAsRead = async (req: Request, res: Response) => {
   try {
     const { tutorId } = req.query;
-
     if (!tutorId) {
       return res.status(400).json({
         success: false,
         error: "튜터 ID가 필요합니다.",
       } as ApiResponse);
     }
+    const tutorIdNum = Number(tutorId);
+    if (isNaN(tutorIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: "tutorId가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     await prisma.notification.updateMany({
       where: {
-        tutorId: Number(tutorId),
+        tutorId: tutorIdNum,
         isRead: false,
       },
       data: { isRead: true },
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "모든 알림이 읽음으로 표시되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("모든 알림 읽음 처리 오류:", error);
-    res.status(500).json({
+    console.error("[markAllAsRead] 모든 알림 읽음 처리 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -283,12 +279,17 @@ export const markAllAsRead = async (req: Request, res: Response) => {
 export const deleteNotification = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "id가 올바르지 않습니다.",
+      } as ApiResponse);
+    }
 
     // 알림 존재 확인
     const existingNotification = await prisma.notification.findUnique({
       where: { id },
     });
-
     if (!existingNotification) {
       return res.status(404).json({
         success: false,
@@ -298,13 +299,13 @@ export const deleteNotification = async (req: Request, res: Response) => {
 
     await prisma.notification.delete({ where: { id } });
 
-    res.json({
+    return res.json({
       success: true,
       message: "알림이 성공적으로 삭제되었습니다.",
     } as ApiResponse);
   } catch (error) {
-    console.error("알림 삭제 오류:", error);
-    res.status(500).json({
+    console.error("[deleteNotification] 알림 삭제 오류:", error);
+    return res.status(500).json({
       success: false,
       error: "서버 오류가 발생했습니다.",
     } as ApiResponse);
@@ -320,12 +321,7 @@ export const createLessonReminder = async (
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
-        student: {
-          select: {
-            name: true,
-            subject: true,
-          },
-        },
+        student: { select: { name: true, subject: true } },
       },
     });
 
@@ -349,7 +345,7 @@ export const createLessonReminder = async (
 
     return notification;
   } catch (error) {
-    console.error("수업 리마인드 생성 오류:", error);
+    console.error("[createLessonReminder] 수업 리마인드 생성 오류:", error);
     throw error;
   }
 };
@@ -365,12 +361,7 @@ export const createReportReadyNotification = async (
       include: {
         lesson: {
           include: {
-            student: {
-              select: {
-                name: true,
-                subject: true,
-              },
-            },
+            student: { select: { name: true, subject: true } },
           },
         },
       },
@@ -384,7 +375,7 @@ export const createReportReadyNotification = async (
       data: {
         type: "REPORT_READY",
         title: "리포트 준비 완료",
-        message: `${report.lesson.student.name} 학생의 ${report.lesson.subject} 수업 리포트가 준비되었습니다.`,
+        message: `${report.lesson.student.name} 학생의 ${report.lesson.student.subject} 수업 리포트가 준비되었습니다.`,
         reportId,
         tutorId,
       },
@@ -392,7 +383,10 @@ export const createReportReadyNotification = async (
 
     return notification;
   } catch (error) {
-    console.error("리포트 준비 알림 생성 오류:", error);
+    console.error(
+      "[createReportReadyNotification] 리포트 준비 알림 생성 오류:",
+      error
+    );
     throw error;
   }
 };
